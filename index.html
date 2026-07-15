@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>32 Dấu đi đường</title>
+<link rel="manifest" href="manifest.json"><meta name="theme-color" content="#0c4fd8">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<style>
+:root{--blue:#155eef;--ink:#102a43;--ok:#16803c;--bad:#c62828}
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:linear-gradient(135deg,#eef5ff,#fff8df);color:var(--ink)}
+header{background:#0c4fd8;color:#fff;padding:18px;text-align:center}header h1{margin:0;font-size:clamp(24px,4vw,40px)}main{max-width:1050px;margin:auto;padding:18px}
+.panel{background:#fff;border-radius:20px;padding:18px;box-shadow:0 8px 30px #194a8b1a}.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+.mode,.btn,.answer,.match-item{font:inherit;cursor:pointer}.mode{border:2px solid #dbe7ff;background:#fff;border-radius:18px;padding:22px;font-weight:800;min-height:120px}
+.hidden{display:none!important}.topbar{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
+.btn{border:0;border-radius:12px;padding:11px 16px;background:var(--blue);color:#fff;font-weight:800}.btn.alt{background:#64748b}.btn.good{background:var(--ok)}.btn.warn{background:#e67e22}
+.badge{background:#e8f0ff;color:#174ea6;padding:7px 11px;border-radius:999px;font-weight:800}
+.center{text-align:center}.signal{display:block;width:min(430px,94vw);height:260px;object-fit:contain;margin:12px auto;border:2px solid #dce6f5;border-radius:16px;background:#fff}
+.answers{display:grid;grid-template-columns:1fr 1fr;gap:10px}.answer{padding:14px;border:2px solid #d8e2ef;border-radius:14px;background:#fff;text-align:left;font-weight:700}
+.correct{background:#dff7e6!important;border-color:#38a169!important}.wrong{background:#ffe4e4!important;border-color:#e53e3e!important}.feedback{min-height:34px;font-weight:800;font-size:18px;margin:10px}
+.match-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.match-col{display:grid;gap:9px}.match-item{padding:10px;border:2px solid #d7e2ef;border-radius:12px;background:#fff;font-weight:700;min-height:82px;display:flex;align-items:center;justify-content:center}
+.match-item img{max-width:150px;max-height:90px;object-fit:contain}.selected{outline:4px solid #f6c344}.matched{opacity:.45}
+.typing{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}.typing input{min-width:min(430px,90vw);padding:13px;border:2px solid #b7c7db;border-radius:12px;font-size:18px}
+canvas{display:block;margin:auto;border:2px solid #8fa9c7;border-radius:14px;background:#fff;touch-action:none;max-width:100%;height:auto}.draw-tools{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:12px}
+.sample-wrap{display:grid;grid-template-columns:1fr 1fr;gap:12px}.sample-wrap img{width:100%;max-height:340px;object-fit:contain;border:2px solid #dce6f5;border-radius:14px}
+@media(max-width:700px){.grid,.answers,.match-grid,.sample-wrap{grid-template-columns:1fr}.signal{height:220px}.mode{min-height:95px}}
+</style>
+</head>
+<body>
+<header><h1>🚩 32 DẤU ĐI ĐƯỜNG</h1><p>Học và luyện dấu đi đường trong trò chơi lớn</p></header>
+<main>
+<section id="home" class="panel"><div class="grid">
+<button class="mode" onclick="startQuiz()">1️⃣ Hiện hình – Chọn tên</button>
+<button class="mode" onclick="startMatch()">2️⃣ Nối tên với dấu</button>
+<button class="mode" onclick="startTyping()">3️⃣ Hiện hình – Viết tên</button>
+<button class="mode" onclick="startDrawing()">4️⃣ Hiện tên – Tự vẽ</button>
+</div></section>
+<section id="game" class="panel hidden">
+<div class="topbar"><button class="btn alt" onclick="goHome()">← Trang chủ</button><span id="progress" class="badge"></span><span id="score" class="badge"></span></div>
+<div id="content"></div></section>
+</main>
+<script>
+const DATA=[{"id": 1, "name": "Bắt đầu đi", "image": "images/dau-01.png"}, {"id": 2, "name": "Theo hướng này", "image": "images/dau-02.png"}, {"id": 3, "name": "Đi nhanh lên", "image": "images/dau-03.png"}, {"id": 4, "name": "Chạy", "image": "images/dau-04.png"}, {"id": 5, "name": "Đi chậm lại", "image": "images/dau-05.png"}, {"id": 6, "name": "Quay trở lại", "image": "images/dau-06.png"}, {"id": 7, "name": "Chướng ngại phải vượt qua", "image": "images/dau-07.png"}, {"id": 8, "name": "Chia làm 2 nhóm", "image": "images/dau-08.png"}, {"id": 9, "name": "Hai nhóm nhập lại", "image": "images/dau-09.png"}, {"id": 10, "name": "Rẽ trái", "image": "images/dau-10.png"}, {"id": 11, "name": "Rẽ phải", "image": "images/dau-11.png"}, {"id": 12, "name": "Qua cầu", "image": "images/dau-12.png"}, {"id": 13, "name": "Mật thư hướng này", "image": "images/dau-13.png"}, {"id": 14, "name": "Theo lối tắt", "image": "images/dau-14.png"}, {"id": 15, "name": "Theo lối sông", "image": "images/dau-15.png"}, {"id": 16, "name": "Vượt suối", "image": "images/dau-16.png"}, {"id": 17, "name": "Theo lối suối", "image": "images/dau-17.png"}, {"id": 18, "name": "Có trại gần đây", "image": "images/dau-18.png"}, {"id": 19, "name": "Cắm trại được", "image": "images/dau-19.png"}, {"id": 20, "name": "Không cắm trại được", "image": "images/dau-20.png"}, {"id": 21, "name": "Đường cấm", "image": "images/dau-21.png"}, {"id": 22, "name": "Nước uống được", "image": "images/dau-22.png"}, {"id": 23, "name": "Nước độc (Không uống được)", "image": "images/dau-23.png"}, {"id": 24, "name": "Nguy hiểm", "image": "images/dau-24.png"}, {"id": 25, "name": "Làm cáng", "image": "images/dau-25.png"}, {"id": 26, "name": "Về trại lúc 10 giờ", "image": "images/dau-26.png"}, {"id": 27, "name": "Đi theo dấu chân", "image": "images/dau-27.png"}, {"id": 28, "name": "Đợi ở đây", "image": "images/dau-28.png"}, {"id": 29, "name": "Bình an (an toàn)", "image": "images/dau-29.png"}, {"id": 30, "name": "Có kẻ nghịch (Có địch)", "image": "images/dau-30.png"}, {"id": 31, "name": "Có thú dữ", "image": "images/dau-31.png"}, {"id": 32, "name": "Đã đến nơi (Hết dấu)", "image": "images/dau-32.png"}], $=s=>document.querySelector(s), shuffle=a=>[...a].sort(()=>Math.random()-.5);
+let order=[],current=0,score=0,locked=false,autoTimer=null;
+function showGame(){home.classList.add('hidden');game.classList.remove('hidden')}
+function goHome(){clearTimeout(autoTimer);game.classList.add('hidden');home.classList.remove('hidden');content.innerHTML=''}
+function setTop(total){progress.textContent=`Câu ${Math.min(current+1,total)}/${total}`;scoreEl.textContent=`Điểm: ${score}`}
+const scoreEl=document.getElementById('score');
+function norm(s){return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[()]/g,' ').replace(/[^a-z0-9 ]/g,' ').replace(/\s+/g,' ').trim()}
+function nextButton(fn){let b=document.getElementById('nextBtn');if(b)b.onclick=fn;autoTimer=setTimeout(fn,1500)}
+function finish(total=32){progress.textContent='Hoàn thành';scoreEl.textContent=`Điểm: ${score}`;content.innerHTML=`<div class="center"><h2>🎉 Hoàn thành!</h2><p style="font-size:24px;font-weight:800">${score}/${total} điểm</p><button class="btn" onclick="goHome()">Về trang chủ</button></div>`}
+
+function startQuiz(){showGame();order=shuffle(DATA);current=0;score=0;renderQuiz()}
+function renderQuiz(){
+ if(current>=32)return finish(32);locked=false;setTop(32);let q=order[current];
+ let opts=shuffle([q,...shuffle(DATA.filter(x=>x.id!==q.id)).slice(0,3)]);
+ content.innerHTML=`<div class="center"><h2>Chọn tên đúng của dấu này</h2><img class="signal" src="${q.image}">
+ <div class="answers">${opts.map(o=>`<button class="answer" data-id="${o.id}">${o.name}</button>`).join('')}</div><div class="feedback"></div>
+ <button id="nextBtn" class="btn alt hidden">Câu tiếp theo</button></div>`;
+ document.querySelectorAll('.answer').forEach(b=>b.onclick=()=>{if(locked)return;locked=true;let ok=+b.dataset.id===q.id;
+ if(ok){score++;b.classList.add('correct');document.querySelector('.feedback').textContent='✅ Chính xác!'}
+ else{b.classList.add('wrong');document.querySelector(`[data-id="${q.id}"]`).classList.add('correct');document.querySelector('.feedback').textContent=`❌ Đáp án đúng: ${q.name}`}
+ setTop(32);nextBtn.classList.remove('hidden');nextButton(()=>{current++;renderQuiz()})});
+}
+
+let pairs=[],selName=null,selImg=null,matched=0,matchRound=0;
+function startMatch(){showGame();score=0;current=0;matchRound=0;renderMatch()}
+function renderMatch(){
+ if(matchRound>=8)return finish(32);
+ pairs=shuffle(DATA.slice(matchRound*4,matchRound*4+4));matched=0;selName=selImg=null;current=matchRound*4;setTop(32);
+ content.innerHTML=`<div class="center"><h2>Nối đúng 4 cặp – lượt ${matchRound+1}/8</h2></div><div class="match-grid">
+ <div class="match-col">${shuffle(pairs).map(x=>`<button class="match-item" data-kind="name" data-id="${x.id}">${x.name}</button>`).join('')}</div>
+ <div class="match-col">${shuffle(pairs).map(x=>`<button class="match-item" data-kind="img" data-id="${x.id}"><img src="${x.image}"></button>`).join('')}</div></div>
+ <div class="feedback center"></div><div class="center"><button id="nextBtn" class="btn alt hidden">Nhóm tiếp theo</button></div>`;
+ document.querySelectorAll('.match-item').forEach(el=>el.onclick=()=>pickMatch(el));
+}
+function pickMatch(el){
+ if(el.classList.contains('matched'))return;let kind=el.dataset.kind;
+ document.querySelectorAll(`[data-kind="${kind}"]`).forEach(x=>x.classList.remove('selected'));el.classList.add('selected');
+ if(kind==='name')selName=el;else selImg=el;
+ if(selName&&selImg){
+   if(selName.dataset.id===selImg.dataset.id){selName.classList.add('matched');selImg.classList.add('matched');score++;matched++;document.querySelector('.feedback').textContent='✅ Nối đúng!'}
+   else document.querySelector('.feedback').textContent='❌ Chưa đúng, thử lại.';
+   selName.classList.remove('selected');selImg.classList.remove('selected');selName=selImg=null;current=matchRound*4+matched;setTop(32);
+   if(matched===4){nextBtn.classList.remove('hidden');nextButton(()=>{matchRound++;renderMatch()})}
+ }
+}
+
+function startTyping(){showGame();order=shuffle(DATA);current=0;score=0;renderTyping()}
+function renderTyping(){
+ if(current>=32)return finish(32);setTop(32);let q=order[current];
+ content.innerHTML=`<div class="center"><h2>Viết đúng tên dấu này</h2><img class="signal" src="${q.image}">
+ <div class="typing"><input id="typed" autocomplete="off" placeholder="Nhập tên dấu..."><button class="btn" id="check">Kiểm tra</button></div>
+ <div class="feedback"></div><button class="btn alt hidden" id="nextBtn">Câu tiếp theo</button></div>`;
+ check.onclick=()=>{let ok=norm(typed.value)===norm(q.name);if(ok){score++;document.querySelector('.feedback').textContent='✅ Chính xác!'}else document.querySelector('.feedback').textContent=`❌ Đáp án đúng: ${q.name}`;
+ typed.disabled=true;check.disabled=true;nextBtn.classList.remove('hidden');setTop(32);nextButton(()=>{current++;renderTyping()})};
+ typed.onkeydown=e=>{if(e.key==='Enter')check.click()}
+}
+
+let canvas,ctx,drawing=false,last=null,history=[],templateImg=null,templateReady=false;
+function startDrawing(){showGame();order=shuffle(DATA);current=0;score=0;renderDrawing()}
+function renderDrawing(){
+ if(current>=32)return finish(32);setTop(32);let q=order[current];
+ content.innerHTML=`<div class="center"><h2>Hãy vẽ dấu: <b>${q.name}</b></h2></div>
+ <div class="center"><canvas id="board" width="500" height="340"></canvas>
+ <div class="draw-tools"><button class="btn alt" onclick="undoDraw()">↩ Hoàn tác</button><button class="btn warn" onclick="clearDraw()">🗑 Xóa</button><button class="btn" id="checkDrawBtn">✅ Kiểm tra</button></div></div>
+ <div id="sampleBox" class="hidden"><h3 class="center">Hình mẫu để đối chiếu</h3><img id="template" class="signal" style="height:320px" src="${q.image}"></div>
+ <div class="feedback center"></div><div class="center"><button id="nextBtn" class="btn alt hidden">Câu tiếp theo</button></div>`;
+ canvas=board;ctx=canvas.getContext('2d');ctx.lineWidth=7;ctx.lineCap='round';ctx.strokeStyle='#111';ctx.fillStyle='white';ctx.fillRect(0,0,canvas.width,canvas.height);history=[];saveState();
+ templateImg=document.getElementById('template');
+ templateReady=templateImg.complete && templateImg.naturalWidth>0;
+ templateImg.onload=()=>{templateReady=true;};
+ document.getElementById('checkDrawBtn').onclick=checkDrawing;
+ const pos=e=>{let r=canvas.getBoundingClientRect(),p=e.touches?e.touches[0]:e;return{x:(p.clientX-r.left)*canvas.width/r.width,y:(p.clientY-r.top)*canvas.height/r.height}};
+ const down=e=>{e.preventDefault();drawing=true;last=pos(e)};const move=e=>{if(!drawing)return;e.preventDefault();let p=pos(e);ctx.beginPath();ctx.moveTo(last.x,last.y);ctx.lineTo(p.x,p.y);ctx.stroke();last=p};
+ const up=()=>{if(drawing){drawing=false;saveState()}};canvas.onmousedown=down;canvas.onmousemove=move;window.onmouseup=up;canvas.ontouchstart=down;canvas.ontouchmove=move;canvas.ontouchend=up;
+}
+function saveState(){history.push(canvas.toDataURL());if(history.length>25)history.shift()}
+function undoDraw(){if(history.length<=1)return;history.pop();let im=new Image;im.onload=()=>{ctx.fillStyle='white';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.drawImage(im,0,0)};im.src=history.at(-1)}
+function clearDraw(){ctx.fillStyle='white';ctx.fillRect(0,0,canvas.width,canvas.height);saveState()}
+function normalizedMask(sourceCanvas){
+ const c=sourceCanvas,w=c.width,h=c.height;
+ const data=c.getContext('2d',{willReadFrequently:true}).getImageData(0,0,w,h).data;
+ let minx=w,miny=h,maxx=-1,maxy=-1,count=0;
+ for(let y=0;y<h;y++){
+   for(let x=0;x<w;x++){
+     const i=(y*w+x)*4;
+     if((data[i]+data[i+1]+data[i+2])/3<180){
+       count++;
+       if(x<minx)minx=x;
+       if(x>maxx)maxx=x;
+       if(y<miny)miny=y;
+       if(y>maxy)maxy=y;
+     }
+   }
+ }
+ if(count<40 || maxx<minx || maxy<miny)return null;
+ const out=document.createElement('canvas');
+ out.width=96;out.height=96;
+ const o=out.getContext('2d',{willReadFrequently:true});
+ o.fillStyle='white';o.fillRect(0,0,96,96);
+ const pad=8;
+ const sw=Math.max(1,maxx-minx+1),sh=Math.max(1,maxy-miny+1);
+ const scale=Math.min((96-2*pad)/sw,(96-2*pad)/sh);
+ const dw=sw*scale,dh=sh*scale;
+ o.imageSmoothingEnabled=true;
+ o.drawImage(c,minx,miny,sw,sh,(96-dw)/2,(96-dh)/2,dw,dh);
+ return out;
+}
+function imageToCanvas(img){
+ const c=document.createElement('canvas');
+ c.width=img.naturalWidth||420;c.height=img.naturalHeight||280;
+ const x=c.getContext('2d',{willReadFrequently:true});
+ x.fillStyle='white';x.fillRect(0,0,c.width,c.height);
+ x.drawImage(img,0,0,c.width,c.height);
+ return c;
+}
+
+function maskFromCanvas(c){
+ const d=c.getContext('2d',{willReadFrequently:true}).getImageData(0,0,96,96).data;
+ const mask=new Uint8Array(96*96);
+ for(let i=0,p=0;i<d.length;i+=4,p++) mask[p]=d[i]<200?1:0;
+ return mask;
+}
+function dilate(mask,r=1){
+ const out=new Uint8Array(mask.length);
+ for(let y=0;y<96;y++)for(let x=0;x<96;x++){
+   let found=0;
+   for(let dy=-r;dy<=r&&!found;dy++)for(let dx=-r;dx<=r;dx++){
+     const nx=x+dx,ny=y+dy;
+     if(nx>=0&&nx<96&&ny>=0&&ny<96&&mask[ny*96+nx]){found=1;break;}
+   }
+   out[y*96+x]=found;
+ }
+ return out;
+}
+function distanceField(mask){
+ const INF=9999;
+ const dist=new Float32Array(96*96);
+ for(let i=0;i<dist.length;i++)dist[i]=mask[i]?0:INF;
+
+ // forward pass
+ for(let y=0;y<96;y++){
+   for(let x=0;x<96;x++){
+     const i=y*96+x;
+     let v=dist[i];
+     if(x>0)v=Math.min(v,dist[i-1]+1);
+     if(y>0)v=Math.min(v,dist[i-96]+1);
+     if(x>0&&y>0)v=Math.min(v,dist[i-97]+1.414);
+     if(x<95&&y>0)v=Math.min(v,dist[i-95]+1.414);
+     dist[i]=v;
+   }
+ }
+ // backward pass
+ for(let y=95;y>=0;y--){
+   for(let x=95;x>=0;x--){
+     const i=y*96+x;
+     let v=dist[i];
+     if(x<95)v=Math.min(v,dist[i+1]+1);
+     if(y<95)v=Math.min(v,dist[i+96]+1);
+     if(x<95&&y<95)v=Math.min(v,dist[i+97]+1.414);
+     if(x>0&&y<95)v=Math.min(v,dist[i+95]+1.414);
+     dist[i]=v;
+   }
+ }
+ return dist;
+}
+function directionalScore(sourceMask,targetDist){
+ let total=0,count=0;
+ for(let i=0;i<sourceMask.length;i++){
+   if(sourceMask[i]){
+     total+=Math.min(targetDist[i],12);
+     count++;
+   }
+ }
+ if(!count)return 0;
+ const avg=total/count;
+ return Math.max(0,1-avg/12);
+}
+function similarity(a,b){
+ let A=maskFromCanvas(a),B=maskFromCanvas(b);
+
+ // Thicken both masks slightly so hand-drawn stroke width does not hurt the score.
+ A=dilate(A,2);
+ B=dilate(B,2);
+
+ const distA=distanceField(A);
+ const distB=distanceField(B);
+
+ const ab=directionalScore(A,distB);
+ const ba=directionalScore(B,distA);
+
+ // Harmonic mean: both shapes must substantially cover each other.
+ return (2*ab*ba)/(ab+ba||1);
+}
+function checkDrawing(){
+ const feedback=document.querySelector('.feedback');
+ const button=document.getElementById('checkDrawBtn');
+ if(!templateReady || !templateImg || !templateImg.naturalWidth){
+   feedback.textContent='⏳ Hình mẫu đang tải, bạn bấm Kiểm tra lại sau một chút.';
+   return;
+ }
+ button.disabled=true;
+ feedback.textContent='⏳ Đang chấm nét vẽ...';
+ try{
+   const userMask=normalizedMask(canvas);
+   const templateCanvas=imageToCanvas(templateImg);
+   const templateMask=normalizedMask(templateCanvas);
+   if(!userMask){
+     feedback.textContent='❌ Bạn chưa vẽ hoặc nét vẽ còn quá ít. Điểm: 0.';
+     button.disabled=false;
+     return;
+   }
+   if(!templateMask){
+     feedback.textContent='❌ Không đọc được hình mẫu. Bạn hãy tải lại trang.';
+     button.disabled=false;
+     return;
+   }
+   const percent=Math.round(similarity(userMask,templateMask)*100);
+   const ok=percent>=70;
+   document.getElementById('sampleBox').classList.remove('hidden');
+   if(ok){
+     score++;
+     feedback.innerHTML=`✅ <b>Đúng!</b> Độ khớp: <b>${percent}%</b> — được <b>1 điểm</b>.`;
+   }else{
+     feedback.innerHTML=`❌ <b>Chưa đúng.</b> Độ khớp: <b>${percent}%</b> — được <b>0 điểm</b>.<br>Phải đạt từ <b>70%</b> mới tính đúng.`;
+   }
+   setTop(32);
+   document.querySelectorAll('.draw-tools button').forEach(b=>b.disabled=true);
+   const next=document.getElementById('nextBtn');
+   next.classList.remove('hidden');
+   next.onclick=()=>{current++;renderDrawing();};
+ }catch(err){
+   console.error(err);
+   feedback.textContent='❌ Không thể chấm nét vẽ ở lần này. Bạn hãy bấm Kiểm tra lại.';
+   button.disabled=false;
+ }
+}
+
+if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+</script></body></html>
